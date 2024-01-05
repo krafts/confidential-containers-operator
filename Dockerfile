@@ -4,7 +4,7 @@ ARG IMG_NAME
 ARG IMG_VERSION
 
 # Build the manager binary
-FROM ${IMG_NAME:-golang}:${IMG_VERSION:-1.20} as builder
+FROM golang:1.20 as builder
 
 WORKDIR /workspace
 # Copy the Go Modules manifests
@@ -19,12 +19,13 @@ COPY main.go main.go
 COPY api/ api/
 COPY controllers/ controllers/
 
+## GOARM=8.1??
 # Build
-RUN CGO_ENABLED=0 GOOS=linux go build -a -o manager main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -a -o manager main.go
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot
+FROM gcr.io/distroless/static:nonroot-arm64
 WORKDIR /
 COPY --from=builder /workspace/manager .
 USER 65532:65532

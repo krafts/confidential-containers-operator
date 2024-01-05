@@ -17,16 +17,21 @@ nydus_snapshotter_version=${nydus_snapshotter_version:-"v0.13.3-multiarch"}
 containerd_dir="$(mktemp -d -t containerd-XXXXXXXXXX)/containerd"
 extra_docker_manifest_flags="${extra_docker_manifest_flags:-}"
 
-registry="${registry:-quay.io/confidential-containers/reqs-payload}"
+registry="${registry:-nvcr.io/nvidian/kaze/confidential-containers-container-engine-for-cc-payload}"
+
+# supported_arches=(
+# 	"linux/amd64"
+# 	"linux/s390x"
+# 	"linux/arm64"
+# )
 
 supported_arches=(
-	"linux/amd64"
-	"linux/s390x"
+	"linux/arm64"
 )
 
 function setup_env_for_arch() {
 	case "$1" in
-		"linux/amd64") 
+		"linux/amd64")
 			kernel_arch="x86_64"
 			golang_arch="amd64"
 			;;
@@ -34,19 +39,23 @@ function setup_env_for_arch() {
 			kernel_arch="s390x"
 			golang_arch="s390x"
 			;;
+		"linux/arm64")
+			kernel_arch="arm64"
+			golang_arch="arm64"
+			;;
 		*) echo "$1 is not supported" >/dev/stderr && exit 1 ;;
 	esac
-		
+
 }
 
 function purge_previous_manifests() {
 	manifest=${1}
-	
+
 	# We need to sanitise the name by:
 	# * Replacing:
 	#   * '/' by '_'
 	#   * ':' by '-'
-	
+
 	sanitised_manifest="$(echo ${manifest} | sed 's|/|_|g' | sed 's|:|-|g')"
 	rm -rf ${HOME}/.docker/manifests/${sanitised_manifest} || true
 }
@@ -77,21 +86,21 @@ function build_payload() {
 		docker push "${registry}:${kernel_arch}-${tag}"
 	done
 
-	purge_previous_manifests ${registry}:${tag}
-	purge_previous_manifests ${registry}:latest
+	# purge_previous_manifests ${registry}:${tag}
+	# purge_previous_manifests ${registry}:latest
 
-	docker manifest create ${extra_docker_manifest_flags} \
-		${registry}:${tag} \
-		--amend ${registry}:x86_64-${tag} \
-		--amend ${registry}:s390x-${tag}
+	# docker manifest create ${extra_docker_manifest_flags} \
+	# 	${registry}:${tag} \
+	# 	--amend ${registry}:x86_64-${tag} \
+	# 	--amend ${registry}:s390x-${tag}
 
-	docker manifest create ${extra_docker_manifest_flags} \
-		${registry}:latest \
-		--amend ${registry}:x86_64-${tag} \
-		--amend ${registry}:s390x-${tag}
+	# docker manifest create ${extra_docker_manifest_flags} \
+	# 	${registry}:latest \
+	# 	--amend ${registry}:x86_64-${tag} \
+	# 	--amend ${registry}:s390x-${tag}
 
-	docker manifest push ${extra_docker_manifest_flags} ${registry}:${tag}
-	docker manifest push ${extra_docker_manifest_flags} ${registry}:latest
+	# docker manifest push ${extra_docker_manifest_flags} ${registry}:${tag}
+	# docker manifest push ${extra_docker_manifest_flags} ${registry}:latest
 
 	popd
 }

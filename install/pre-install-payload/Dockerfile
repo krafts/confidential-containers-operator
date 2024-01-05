@@ -54,7 +54,7 @@ RUN \
 	tar xvzpf containerd-static-${VFIO_GPU_CONTAINERD_VERSION}-linux-${ARCH}.tar.gz -C ${NODE_DESTINATION} && \
 	rm containerd-static-${VFIO_GPU_CONTAINERD_VERSION}-linux-${ARCH}.tar.gz
 
-#### Nydus snapshotter & nydus image
+# #### Nydus snapshotter & nydus image
 
 FROM golang:1.19-alpine AS nydus-binary-downloader
 
@@ -67,14 +67,8 @@ ARG NODE_DESTINATION=${DESTINATION}/opt/confidential-containers
 
 ENV GOARCH=${ARCH}
 
-RUN mkdir -p ${NODE_DESTINATION}/bin && \
-    apk add --no-cache curl && \
-    if [ "${ARCH}" = "amd64" ]; then ARCH=x86_64; fi && \
-    curl -fOL --progress-bar ${NYDUS_SNAPSHOTTER_REPO}/releases/download/${NYDUS_SNAPSHOTTER_VERSION}/nydus-snapshotter-${NYDUS_SNAPSHOTTER_VERSION}-${ARCH}.tgz && \
-    tar xvzpf nydus-snapshotter-${NYDUS_SNAPSHOTTER_VERSION}-${ARCH}.tgz -C / && \
-    rm nydus-snapshotter-${NYDUS_SNAPSHOTTER_VERSION}-${ARCH}.tgz && \
-    mv /nydus-snapshotter/* ${NODE_DESTINATION}/bin/ && \
-    rm -rf /nydus-snapshotter
+RUN mkdir -p ${NODE_DESTINATION}/bin
+ADD bin/ ${NODE_DESTINATION}/bin/
 
 #### kubectl
 
